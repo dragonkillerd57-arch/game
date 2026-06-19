@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nebula - Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0f0c29; --bg-secondary: #302b63; --bg-tertiary: #24243e;
+            --accent: #00ffcc; --accent-secondary: #ff0055; --text: #ffffff;
+            --glass: rgba(255, 255, 255, 0.05); --border: rgba(255, 255, 255, 0.1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        body { background: var(--bg-color); color: var(--text); overflow-x: hidden; min-height: 100vh; }
+
+        .bg-animation { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; background: linear-gradient(-45deg, var(--bg-color), var(--bg-secondary), var(--bg-tertiary), #1a1a2e); background-size: 400% 400%; animation: gradientShift 15s ease infinite; }
+        @keyframes gradientShift { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+
+        .orb { position: fixed; border-radius: 50%; filter: blur(80px); z-index: -1; opacity: 0.4; }
+        .orb-1 { top: -10%; left: -10%; width: 400px; height: 400px; background: var(--accent); animation: float 8s ease-in-out infinite; }
+        .orb-2 { bottom: -10%; right: -10%; width: 500px; height: 500px; background: var(--accent-secondary); animation: float 10s ease-in-out infinite reverse; }
+        @keyframes float { 0%, 100% { transform: translate(0, 0); } 50% { transform: translate(50px, 30px); } }
+
+        header { display: flex; justify-content: space-between; align-items: center; padding: 20px 5%; backdrop-filter: blur(10px); background: var(--glass); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100; gap: 15px; }
+        .logo { font-size: 1.5rem; font-weight: 800; background: linear-gradient(90deg, var(--accent), var(--text)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; cursor: pointer; white-space: nowrap; }
+        .search-bar { position: relative; flex-grow: 1; max-width: 400px; }
+        .search-bar input { width: 100%; padding: 12px 20px; border-radius: 30px; border: 1px solid var(--border); background: rgba(0,0,0,0.2); color: var(--text); outline: none; transition: 0.3s; }
+        .search-bar input:focus { border-color: var(--accent); box-shadow: 0 0 15px rgba(0, 255, 204, 0.2); }
+
+        .categories { display: flex; justify-content: center; gap: 15px; padding: 30px 5%; flex-wrap: wrap; }
+        .cat-btn { padding: 10px 25px; border-radius: 30px; border: 1px solid var(--border); background: var(--glass); color: var(--text); cursor: pointer; transition: 0.3s; font-weight: 600; }
+        .cat-btn:hover, .cat-btn.active { background: var(--accent); color: #000; border-color: var(--accent); transform: translateY(-3px); box-shadow: 0 5px 20px rgba(0, 255, 204, 0.4); }
+
+        .game-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 25px; padding: 20px 5% 50px; }
+        .game-card { background: var(--glass); border: 1px solid var(--border); border-radius: 20px; overflow: hidden; cursor: pointer; transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); opacity: 0; transform: translateY(50px); animation: cardEntrance 0.6s forwards; }
+        .game-card:hover { transform: translateY(-10px) scale(1.02); border-color: var(--accent); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5); }
+        @keyframes cardEntrance { to { opacity: 1; transform: translateY(0); } }
+
+        .game-preview { height: 150px; background-size: cover; background-position: center; position: relative; transition: 0.4s; }
+        .game-card:hover .game-preview { background-size: 110%; }
+        .game-info { padding: 15px; }
+        .game-title { font-size: 1.1rem; font-weight: 600; margin-bottom: 5px; }
+        .game-desc { font-size: 0.8rem; color: #aaa; }
+
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(10px); display: none; justify-content: center; align-items: center; z-index: 1000; opacity: 0; transition: opacity 0.3s; }
+        .modal.active { display: flex; opacity: 1; }
+        .modal-content { position: relative; width: 90%; height: 85%; max-width: 1200px; background: #000; border-radius: 15px; border: 1px solid var(--accent); overflow: hidden; box-shadow: 0 0 50px rgba(0, 255, 204, 0.2); transform: scale(0.9); transition: transform 0.3s; display: flex; flex-direction: column; }
+        .modal.active .modal-content { transform: scale(1); }
+        .close-btn { position: absolute; top: -40px; right: 0; font-size: 2rem; color: var(--text); cursor: pointer; transition: 0.3s; background: none; border: none; }
+        .close-btn:hover { color: var(--accent-secondary); transform: rotate(90deg); }
+        .game-frame { width: 100%; flex-grow: 1; border: none; background: #111; min-height: 400px; }
+
+        @media (max-width: 768px) { header { flex-wrap: wrap; } .search-bar { order: 3; max-width: 100%; flex-basis: 100%; } .modal-content { width: 95%; height: 80%; } }
+    </style>
+</head>
+<body>
+
+    <div class="bg-animation"></div>
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+
+    <header>
+        <div class="logo">NEBULA</div>
+        <div class="search-bar">
+            <input type="text" id="searchInput" placeholder="Search games..." oninput="filterGames()">
+        </div>
+    </header>
+
+    <div class="categories" id="categoryContainer">
+        <button class="cat-btn active" onclick="filterCategory('All', this)">All</button>
+        <button class="cat-btn" onclick="filterCategory('Action', this)">Action</button>
+        <button class="cat-btn" onclick="filterCategory('Puzzle', this)">Puzzle</button>
+        <button class="cat-btn" onclick="filterCategory('Arcade', this)">Arcade</button>
+        <button class="cat-btn" onclick="filterCategory('Retro', this)">Retro</button>
+    </div>
+
+    <div class="game-grid" id="gameGrid"></div>
+
+    <div class="modal" id="gameModal">
+        <div class="modal-content">
+            <button class="close-btn" onclick="closeGame()">&times;</button>
+            <iframe id="gameFrame" class="game-frame" allow="fullscreen; gamepad; autoplay" allowfullscreen></iframe>
+        </div>
+    </div>
+
+    <script>
+        // These games are ALREADY hosted on the jsDelivr CDN by open-source developers.
+        // Securly will only see traffic going to "cdn.jsdelivr.net" and will not block it.
+        const games = [
+            { title: "2048", desc: "Slide and merge tiles", category: "Puzzle", url: "https://cdn.jsdelivr.net/gh/gabrielecirulli/2048@master/index.html", thumb: "linear-gradient(135deg, #f6d365, #fda085)" },
+            { title: "Tetris", desc: "Classic block stacking", category: "Retro", url: "https://cdn.jsdelivr.net/gh/jakesgordon/javascript-tetris@master/index.html", thumb: "linear-gradient(135deg, #667eea, #764ba2)" },
+            { title: "Hextris", desc: "Fast paced puzzle game", category: "Puzzle", url: "https://cdn.jsdelivr.net/gh/Hextris/Hextris@master/index.html", thumb: "linear-gradient(135deg, #4facfe, #00f2fe)" },
+            { title: "Snake", desc: "Eat apples, grow longer", category: "Arcade", url: "https://cdn.jsdelivr.net/gh/patorjk/JavaScript-Snake@master/index.html", thumb: "linear-gradient(135deg, #00b09b, #96c93d)" }
+        ];
+
+        let currentCategory = "All";
+        let currentSearch = "";
+
+        function renderGames() {
+            const grid = document.getElementById('gameGrid');
+            grid.innerHTML = "";
+            const filteredGames = games.filter(game => {
+                const matchesCategory = currentCategory === "All" || game.category === currentCategory;
+                const matchesSearch = game.title.toLowerCase().includes(currentSearch.toLowerCase());
+                return matchesCategory && matchesSearch;
+            });
+            filteredGames.forEach((game, index) => {
+                const card = document.createElement('div');
+                card.className = 'game-card';
+                card.style.animationDelay = `${index * 0.05}s`;
+                card.innerHTML = `<div class="game-preview" style="background: ${game.thumb};"></div><div class="game-info"><div class="game-title">${game.title}</div><div class="game-desc">${game.desc} • ${game.category}</div></div>`;
+                card.onclick = () => openGame(game.url);
+                grid.appendChild(card);
+            });
+        }
+
+        function filterCategory(category, btn) {
+            currentCategory = category;
+            document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            renderGames();
+        }
+
+        function filterGames() { currentSearch = document.getElementById('searchInput').value; renderGames(); }
+
+        // Securly Bypass: about:blank injection
+        function openGame(url) {
+            const modal = document.getElementById('gameModal');
+            const frame = document.getElementById('gameFrame');
+            
+            // 1. Set the iframe to about:blank so Securly doesn't see the game URL
+            frame.src = "about:blank";
+            
+            // 2. Show the modal
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+
+            // 3. Wait a tiny bit, then write the game into the blank iframe
+            setTimeout(() => {
+                const doc = frame.contentWindow || frame.contentDocument;
+                if (doc.document) doc = doc.document;
+                
+                doc.open();
+                doc.write(`
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <title>Classroom</title>
+                        <style>body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; background: #000; } iframe { width: 100%; height: 100%; border: none; }</style>
+                    </head>
+                    <body>
+                        <iframe src="${url}" allow="fullscreen; gamepad; autoplay" allowfullscreen></iframe>
+                    </body>
+                    </html>
+                `);
+                doc.close();
+            }, 50);
+        }
+
+        function closeGame() {
+            const modal = document.getElementById('gameModal');
+            const frame = document.getElementById('gameFrame');
+            modal.classList.remove('active');
+            frame.src = "about:blank"; // Clear it back to blank
+            document.body.style.overflow = 'auto';
+        }
+
+        document.getElementById('gameModal').addEventListener('click', function(e) { if (e.target === this) closeGame(); });
+        document.addEventListener('keydown', function(e) { if (e.key === "Escape") closeGame(); });
+
+        renderGames();
+    </script>
+</body>
+</html>
